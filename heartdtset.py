@@ -1,67 +1,90 @@
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
+
+data = pd.read_csv('heartdt.csv')
+data.isnull().sum()
+data_dup = data.duplicated().any()
+data_dup
+
+# data rocessing
+cate_val = []
+cont_val = []
+for column in data.columns:
+    if data[column].nunique() <=10:
+        cate_val.append(column)
+    else:
+        cont_val.append(column)
+
+print(cate_val)
+print(cont_val)
+
+cate_val.remove('sex')
+cate_val.remove('target')
+data = pd.get_dummies(data,columns = cate_val,drop_first=True)
+
+# Feature Scaling
+
 from sklearn.preprocessing import StandardScaler
+st = StandardScaler()
+data[cont_val] = st.fit_transform(data[cont_val])
+
+#Splitting the dataset
+
+X = data.drop('target',axis=1)
+y = data['target']
+from sklearn.model_selection import train_test_split
+X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.2,
+                                               random_state=42)
+# Logistic Regression
+
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import mean_squared_error, accuracy_score, confusion_matrix
-from sklearn.tree import  DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import SVC
+log = LogisticRegression()
+log.fit(X_train,y_train)
+LogisticRegression()
+y_pred1 = log.predict(X_test)
+from sklearn.metrics import accuracy_score
+print(accuracy_score(y_test,y_pred1))
+
+#SVC
+
+from sklearn import svm
+svm = svm.SVC()
+svm.fit(X_train,y_train)
+y_pred2 = svm.predict(X_test)
+print(accuracy_score(y_test,y_pred2))
+
+#KNN-C
 from sklearn.neighbors import KNeighborsClassifier
+knn = KNeighborsClassifier()
+knn.fit(X_train,y_train)
+KNeighborsClassifier()
+y_pred3=knn.predict(X_test)
+print(accuracy_score(y_test,y_pred3))
 
-data = pd.read_csv('E:\heart.csv',na_values='?')
+# for non-linear ml algos
 
-data= pd.get_dummies(data,columns=["cp","restecg"])
-#print(data.head())
-numerical_cols = ['age','trestbps','chol','thalach','oldpeak','slope','ca','thal']
-cat_cols = list(set(data.columns)-set(numerical_cols) - {"target"})
-data_train , data_test = train_test_split(data, test_size=0.2,random_state=42)
-scalar = StandardScaler()
-def get_future_and_targetarray(data,numerical_cols,cat_cols,scalar):
-    x_numeric_scaled = scalar.fit_transform(data[numerical_cols])
-    x_categorical = data[cat_cols].to_numpy()
-    x = np.hstack((x_categorical,x_numeric_scaled))
-    y = data["target"]
-    return x,y
-x_train , y_train = get_future_and_targetarray(data_train,cat_cols,numerical_cols,scalar)
-clf = LogisticRegression()
-clf.fit(x_train,y_train)
+data = pd.read_csv('heartdt.csv')
+data = data.drop_duplicates()
+X = data.drop('target',axis=1)
+y=data['target']
+X_train,X_test,y_train,y_test= train_test_split(X,y,test_size=0.2,
+                                                random_state=42)
+#Decision Tree Classifier
 
-x_test , y_test = get_future_and_targetarray(data_test,cat_cols,numerical_cols,scalar)
-test_pred = clf.predict(x_test)
-mean_squared_error(y_test,test_pred)
-print("accuracy of LR")
-print(accuracy_score(y_test,test_pred))
-confusion_matrix(y_test,test_pred)
+from sklearn.tree import DecisionTreeClassifier
+dt = DecisionTreeClassifier()
+dt.fit(X_train,y_train)
+DecisionTreeClassifier()
+y_pred4= dt.predict(X_test)
+print(accuracy_score(y_test,y_pred4))
 
+#Random Forest Classifier
 
-dc_clf = DecisionTreeClassifier()
-dc_clf.fit(x_train,y_train)
-dlf_pred = dc_clf.predict(x_test)
-mean_squared_error(y_test,dlf_pred)
-print("accuracy of Dicision Tree")
-print(accuracy_score(y_test,dlf_pred))
+from sklearn.ensemble import RandomForestClassifier
+rf = RandomForestClassifier()
+rf.fit(X_train,y_train)
+RandomForestClassifier()
+y_pred5= rf.predict(X_test)
+print(accuracy_score(y_test,y_pred5))
 
-rc_clf = RandomForestClassifier()
-rc_clf.fit(x_train,y_train)
-rc_pred = rc_clf.predict(x_test)
-mean_squared_error(y_test,rc_pred)
-print("accuracy of Random forest")
-print(accuracy_score(y_test,rc_pred))
-
-svm_clf = SVC()
-svm_clf.fit(x_train,y_train)
-svm_pred = svm_clf.predict(x_test)
-mean_squared_error(y_test,svm_pred)
-print("accuracy of svc")
-print(accuracy_score(y_test,svm_pred))
-
-kn_clf = KNeighborsClassifier()
-kn_clf.fit(x_train,y_train)
-kn_pred = kn_clf.predict(x_test)
-mean_squared_error(y_test,kn_pred)
-print("accuracy of knn")
-print(accuracy_score(y_test,kn_pred))
 
 
